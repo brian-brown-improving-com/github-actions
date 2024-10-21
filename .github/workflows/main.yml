@@ -65,10 +65,14 @@ jobs:
 
       - name: Setup python
         uses: actions/setup-python@v2
+
+      - name: Get directory (sanity check)
+        run: ls
+        
       - name: Build wheel
         run:
           python setup.py bdist_wheel
-      - name: Upload Wheel
+      - name: Upload wheel
         uses: databricks/upload-dbfs-temp@v0
         id: upload_wheel
         with:
