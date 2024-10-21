@@ -31,6 +31,12 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
+      # This is the secret sauce for getting GitHub to work with Azure
+      # Create an "Enterprise application" (App Registration) in Entra (Azure Databricks)
+      # Create a "Federated Credential" for that App Registration
+      # (https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust?pivots=identity-wif-apps-methods-azp#github-actions)
+      # (example: {Organization: brian-brown-improving-com, Repository: github-actions, Entity type: branch, Based on selection: main})
+
       # Obtain an AAD token and use it to upload to Databricks.
       # Note: If running on AWS or GCP, you can directly pass your service principal
       # token via the databricks-host input instead
@@ -57,19 +63,30 @@ jobs:
           --resource=2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
           --query accessToken -o tsv)" >> $GITHUB_ENV
 
-      - name: Azure CLI script
-        uses: azure/cli@v2
+      - name: Setup python
+        uses: actions/setup-python@v2
+      - name: Build wheel
+        run:
+          python setup.py bdist_wheel
+      - name: Upload Wheel
+        uses: databricks/upload-dbfs-temp@v0
+        id: upload_wheel
         with:
-          azcliversion: latest
-          inlineScript: |
-            az account show
+          local-path: dist/my-project.whl
 
-      - name: Azure PowerShell script
-        uses: azure/powershell@v2
-        with:
-          azPSVersion: "latest"
-          inlineScript: |
-            Get-AzContext
+      #- name: Azure CLI script
+      #  uses: azure/cli@v2
+      #  with:
+      #    azcliversion: latest
+      #    inlineScript: |
+      #      az account show
+
+      #- name: Azure PowerShell script
+      #  uses: azure/powershell@v2
+      #  with:
+      #    azPSVersion: "latest"
+      #    inlineScript: |
+      #      Get-AzContext
 
       # Runs a single command using the runners shell
       - name: Say hello, world
